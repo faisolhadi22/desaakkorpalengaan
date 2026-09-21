@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Resmi Desa Akkor - Kec. Palengaan, Kab. Pamekasan</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased" x-data="desaApp()" x-init="init()">
+
+    <!-- TOP BAR -->
+    <div class="bg-emerald-900 text-emerald-100 text-xs py-2 px-4 shadow-inner">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-1">
+            <div class="flex items-center gap-4">
+                <span><i class="fa-solid fa-location-dot mr-1 text-emerald-400"></i> Desa Akkor, Kec. Palengaan, Kab. Pamekasan</span>
+                <span class="hidden md:inline"><i class="fa-solid fa-envelope mr-1 text-emerald-400"></i> pemdesakkor@gmail.com</span>
+            </div>
+            <div>
+                <template x-if="!isAdminLoggedIn">
+                    <button @click="showLoginModal = true" class="hover:text-white underline font-medium transition">
+                        <i class="fa-solid fa-lock mr-1"></i> Login Admin
+                    </button>
+                </template>
+                <template x-if="isAdminLoggedIn">
+                    <div class="flex items-center gap-3">
+                        <span class="text-amber-300 font-semibold"><i class="fa-solid fa-user-shield mr-1"></i> Admin Aktif</span>
+                        <button @click="currentTab = 'admin'; window.scrollTo(0,0);" class="bg-emerald-700 hover:bg-emerald-600 px-2 py-0.5 rounded text-white font-medium transition">Panel Kontrol</button>
+                        <button @click="logoutAdmin()" class="hover:text-red-300 transition"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur shadow-sm border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" @click="currentTab = 'home'; window.scrollTo(0,0);">
+                <img :src="settings.logo || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=100&auto=format&fit=crop'" alt="Logo Desa" class="w-12 h-12 rounded-full object-cover border-2 border-emerald-600 shadow">
+                <div>
+                    <h1 class="font-bold text-lg sm:text-xl text-emerald-900 leading-tight">DESA AKKOR</h1>
+                    <p class="text-xs text-slate-500 font-medium">Kec. Palengaan, Kab. Pamekasan</p>
+                </div>
+            </div>
+
+            <!-- Desktop Navigation -->
+            <nav class="hidden lg:flex items-center gap-1 font-medium text-sm">
+                <button @click="currentTab = 'home'; window.scrollTo(0,0);" :class="currentTab === 'home' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-600 hover:text-emerald-600 hover:bg-slate-50'" class="px-3 py-2 rounded-lg transition">Beranda</button>
+                <button @click="currentTab = 'profil'; window.scrollTo(0,0);" :class="currentTab === 'profil' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-600 hover:text-emerald-600 hover:bg-slate-50'" class="px-3 py-2 rounded-lg transition">Profil Desa</button>
+                <button @click="currentTab = 'prestasi'; window.scrollTo(0,0);" :class="currentTab === 'prestasi' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-600 hover:text-emerald-600 hover:bg-slate-50'" class="px-3 py-2 rounded-lg transition">Prestasi</button>
+                <button @click="currentTab = 'kependudukan'; window.scrollTo(0,0);" :class="currentTab === 'kependudukan' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-600 hover:text-emerald-600 hover:bg-slate-50'" class="px-3 py-2 rounded-lg transition">Kependudukan</button>
+                <button @click="currentTab = 'umkm'; window.scrollTo(0,0);" :class="currentTab === 'umkm' ? 'text-emerald-600 bg-emerald-50' : 'text-slate-600 hover:text-emerald-600 hover:bg-slate-50'" class="px-3 py-2 rounded-lg transition">UMKM Desa</button>
+                <template x-if="isAdminLoggedIn">
+                    <button @click="currentTab = 'admin'; window.scrollTo(0,0);" :class="currentTab === 'admin' ? 'text-amber-600 bg-amber-50' : 'text-amber-700 hover:bg-amber-50'" class="px-3 py-2 rounded-lg transition font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-gear"></i> Admin
+                    </button>
+                </template>
+            </nav>
+
+            <!-- Mobile Menu Toggle -->
+            <div class="lg:hidden flex items-center">
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-slate-700 p-2 focus:outline-none">
+                    <i :class="mobileMenuOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars'" class="text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div x-show="mobileMenuOpen" @click.away="mobileMenuOpen = false" class="lg:hidden bg-white border-b border-slate-100 px-4 pt-2 pb-4 space-y-1 shadow-lg">
+            <button @click="currentTab = 'home'; mobileMenuOpen = false; window.scrollTo(0,0);" class="block w-full text-left px-3 py-2 rounded-md font-medium hover:bg-emerald-50 hover:text-emerald-600">Beranda</button>
+            <button @click="currentTab = 'profil'; mobileMenuOpen = false; window.scrollTo(0,0);" class="block w-full text-left px-3 py-2 rounded-md font-medium hover:bg-emerald-50 hover:text-emerald-600">Profil Desa</button>
+            <button @click="currentTab = 'prestasi'; mobileMenuOpen = false; window.scrollTo(0,0);" class="block w-full text-left px-3 py-2 rounded-md font-medium hover:bg-emerald-50 hover:text-emerald-600">Prestasi Desa</button>
+            <button @click="currentTab = 'kependudukan'; mobileMenuOpen = false; window.scrollTo(0,0);" class="block w-full text-left px-3 py-2 rounded-md font-medium hover:bg-emerald-50 hover:text-emerald-600">Data Kependudukan</button>
+            <button @click="currentTab = 'umkm'; mobileMenuOpen = false; window.scrollTo(0,0);" class="block w-full text-left px-3 py-2 rounded-md font-medium hover:bg-emerald-50 hover:text-emerald-600">UMKM Desa</button>
+            <template x-if="isAdminLoggedIn">
+                <button @click="currentTab = 'admin'; mobileMenuOpen = false; window.scrollTo(0,0);" class="block w-full text-left px-3 py-2 rounded-md font-semibold text-amber-600 bg-amber-50">Panel Admin</button>
+            </template>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="min-h-screen">
+
+        <!-- ==================== TAB: BERANDA ==================== -->
+        <section x-show="currentTab === 'home'" class="space-y-12 pb-16">
+            <div class="relative bg-emerald-950 text-white overflow-hidden">
+                <div class="absolute inset-0 opacity-40">
+                    <img :src="settings.heroImage || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1600&auto=format&fit=crop'" alt="Desa Akkor" class="w-full h-full object-cover">
+                </div>
+                <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 flex flex-col items-center text-center">
+                    <span class="bg-emerald-600/80 text-emerald-100 text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full mb-4 backdrop-blur">Situs Resmi Pemerintah Desa Akkor</span>
+                    <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4 max-w-3xl" x-text="settings.heroTitle || 'Selamat Datang di Website Resmi Desa Akkor'"></h2>
+                    <p class="text-base sm:text-xl text-emerald-100 max-w-2xl mb-8 font-light" x-text="settings.heroSubtitle || 'Kecamatan Palengaan, Kabupaten Pamekasan - Madura, Jawa Timur'"></p>
+                    <div class="flex flex-wrap gap-4 justify-center">
+                        <button @click="currentTab = 'kependudukan'; window.scrollTo(0,0);" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition">Rekapitulasi Kependudukan</button>
+                        <button @click="currentTab = 'profil'; window.scrollTo(0,0);" class="bg-white/10 hover:bg-white/25 text-white border border-white/30 font-semibold px-6 py-3 rounded-xl backdrop-blur transition">Profil Desa</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 text-center">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-users"></i></div>
+                        <h3 class="text-2xl font-bold text-slate-800" x-text="getTotalJiwa()">0</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-1">Total Jiwa</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 text-center">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-map"></i></div>
+                        <h3 class="text-2xl font-bold text-slate-800" x-text="dusunStats.length">5</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-1">Dusun Wilayah</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 text-center">
+                        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-store"></i></div>
+                        <h3 class="text-2xl font-bold text-slate-800" x-text="umkmList.length">0</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-1">UMKM Terdaftar</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 text-center">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mx-auto mb-3 text-xl"><i class="fa-solid fa-award"></i></div>
+                        <h3 class="text-2xl font-bold text-slate-800" x-text="prestasiList.length">0</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-1">Prestasi Desa</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sambutan Kepala Desa -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100 grid md:grid-cols-3 gap-8 items-center">
+                    <div class="text-center md:text-left">
+                        <img :src="settings.kadesFoto || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop'" alt="Kepala Desa Akkor" class="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl object-cover mx-auto md:mx-0 shadow-md border-4 border-emerald-50">
+                        <h4 class="font-bold text-lg text-slate-800 mt-4" x-text="settings.kadesNama || 'Kepala Desa Akkor'"></h4>
+                        <p class="text-xs text-emerald-600 font-semibold">Kepala Desa Akkor</p>
+                    </div>
+                    <div class="md:col-span-2 space-y-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Sambutan Kepala Desa</span>
+                        <h3 class="text-2xl font-bold text-slate-900">Membangun Desa Akkor yang Religius, Maju, dan Sejahtera</h3>
+                        <p class="text-slate-600 text-sm leading-relaxed" x-text="settings.kadesSambutan || 'Selamat datang di portal resmi Desa Akkor, Kecamatan Palengaan, Kabupaten Pamekasan. Kami berkomitmen untuk terus memberikan pelayanan terbaik kepada seluruh warga serta transparan dalam pengelolaan informasi dan data desa.'"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Berita & Artikel Desa -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-end mb-6">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Informasi & Kegiatan</span>
+                        <h3 class="text-2xl font-bold text-slate-900">Artikel & Berita Terbaru Desa</h3>
+                    </div>
+                </div>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="article in articles" :key="article.id">
+                        <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition">
+                            <div>
+                                <img :src="article.image" alt="Thumbnail" class="w-full h-48 object-cover">
+                                <div class="p-6">
+                                    <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                                        <span class="bg-emerald-50 text-emerald-700 font-semibold px-2.5 py-0.5 rounded" x-text="article.category"></span>
+                                        <span x-text="article.date"></span>
+                                    </div>
+                                    <h4 class="font-bold text-slate-800 text-lg mb-2 line-clamp-2" x-text="article.title"></h4>
+                                    <p class="text-slate-600 text-sm line-clamp-3" x-text="article.content"></p>
+                                </div>
+                            </div>
+                            <div class="p-6 pt-0">
+                                <button @click="selectedArticle = article; showArticleModal = true" class="text-emerald-600 font-semibold text-sm hover:underline">Baca Selengkapnya &rarr;</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB: PROFIL DESA ==================== -->
+        <section x-show="currentTab === 'profil'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+            <div class="text-center max-w-2xl mx-auto">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Tentang Kami</span>
+                <h2 class="text-3xl font-extrabold text-slate-900 mt-3">Profil & Sejarah Desa Akkor</h2>
+                <p class="text-slate-600 text-sm mt-2">Kecamatan Palengaan, Kabupaten Pamekasan, Madura - Jawa Timur</p>
+            </div>
+
+            <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100 space-y-6">
+                <h3 class="text-2xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-book-open text-emerald-600"></i> Sejarah Desa Akkor</h3>
+                <div class="prose text-slate-600 text-sm sm:text-base leading-relaxed space-y-4">
+                    <p x-text="settings.sejarahDesa || 'Desa Akkor merupakan salah satu desa yang terletak di wilayah Kecamatan Palengaan, Kabupaten Pamekasan. Desa ini dikenal dengan masyarakatnya yang religius, ramah, dan menjunjung tinggi nilai-nilai tradisi lokal leluhur Madura.'"></p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-emerald-900 text-white rounded-3xl p-8 shadow-sm">
+                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-bullseye text-emerald-400"></i> Visi Desa Akkor</h3>
+                    <p class="text-emerald-100 text-sm sm:text-base leading-relaxed" x-text="settings.visiDesa || 'Terwujudnya Desa Akkor yang Religius, Mandiri, Sejahtera, dan Berkeadilan Berbasis Gotong Royong.'"></p>
+                </div>
+                <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-list-check text-emerald-600"></i> Misi Desa Akkor</h3>
+                    <ul class="space-y-2 text-slate-600 text-sm list-disc list-inside">
+                        <li>Meningkatkan kualitas keimanan dan ketakwaan melalui kegiatan keagamaan masyarakat.</li>
+                        <li>Meningkatkan pelayanan publik yang cepat, transparan, dan akuntabel di kantor desa.</li>
+                        <li>Mengembangkan infrastruktur perdesaan yang merata dan berkelanjutan.</li>
+                        <li>Mengoptimalkan potensi ekonomi lokal melalui pengembangan UMKM dan BUMDes.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <h3 class="text-2xl font-bold text-slate-800 text-center">Struktur Pemerintahan Desa Akkor</h3>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <template x-for="perangkat in perangkatList" :key="perangkat.id">
+                        <div class="bg-white rounded-2xl p-6 text-center shadow-sm border border-slate-100">
+                            <img :src="perangkat.foto" alt="Perangkat" class="w-24 h-24 rounded-full object-cover mx-auto mb-4 shadow border-2 border-emerald-100">
+                            <h4 class="font-bold text-slate-800" x-text="perangkat.nama"></h4>
+                            <p class="text-xs text-emerald-600 font-semibold mt-1" x-text="perangkat.jabatan"></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB: PRESTASI DESA ==================== -->
+        <section x-show="currentTab === 'prestasi'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+            <div class="text-center max-w-2xl mx-auto">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Pencapaian</span>
+                <h2 class="text-3xl font-extrabold text-slate-900 mt-3">Prestasi & Penghargaan Desa</h2>
+                <p class="text-slate-600 text-sm mt-2">Daftar penghargaan dan prestasi gemilang yang diraih oleh Desa Akkor.</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="item in prestasiList" :key="item.id">
+                    <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col justify-between">
+                        <div>
+                            <img :src="item.image" alt="Prestasi" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <span class="bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full inline-block mb-3" x-text="'Tahun ' + item.tahun"></span>
+                                <h4 class="font-bold text-slate-800 text-lg mb-2" x-text="item.judul"></h4>
+                                <p class="text-slate-600 text-sm leading-relaxed" x-text="item.deskripsi"></p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- ==================== TAB: KEPENDUDUKAN (REKAPITULASI AMAN PER DUSUN) ==================== -->
+        <section x-show="currentTab === 'kependudukan'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+            <div class="text-center max-w-2xl mx-auto">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Statistik Wilayah</span>
+                <h2 class="text-3xl font-extrabold text-slate-900 mt-3">Rekapitulasi Kependudukan Desa Akkor</h2>
+                <p class="text-slate-600 text-sm mt-2">Data agregat jumlah penduduk dan Kepala Keluarga (KK) per dusun resmi demi keamanan dan privasi warga.</p>
+            </div>
+
+            <!-- Ringkasan Kartu Total -->
+            <div class="grid sm:grid-cols-3 gap-6">
+                <div class="bg-emerald-900 text-white p-6 rounded-3xl shadow-sm">
+                    <p class="text-xs uppercase font-semibold text-emerald-300">Total Keseluruhan Jiwa</p>
+                    <h3 class="text-3xl font-extrabold mt-1" x-text="getTotalJiwa() + ' Jiwa'"></h3>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <p class="text-xs uppercase font-semibold text-slate-400">Total Kepala Keluarga (KK)</p>
+                    <h3 class="text-3xl font-extrabold text-slate-800 mt-1" x-text="getTotalKK() + ' KK'"></h3>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                    <p class="text-xs uppercase font-semibold text-slate-400">Jumlah Dusun Resmi</p>
+                    <h3 class="text-3xl font-extrabold text-slate-800 mt-1">5 Dusun</h3>
+                </div>
+            </div>
+
+            <!-- Tabel Rekapitulasi Dusun -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-6">
+                <h3 class="text-xl font-bold text-slate-800">Tabel Rekapitulasi Penduduk Berdasarkan 5 Dusun</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 text-xs uppercase font-semibold border-b border-slate-100">
+                                <th class="py-3 px-4">Nama Dusun</th>
+                                <th class="py-3 px-4 text-center">Jumlah KK</th>
+                                <th class="py-3 px-4 text-center">Laki-laki</th>
+                                <th class="py-3 px-4 text-center">Perempuan</th>
+                                <th class="py-3 px-4 text-center font-bold text-emerald-700">Total Jiwa</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
+                            <template x-for="dusun in dusunStats" :key="dusun.nama">
+                                <tr class="hover:bg-slate-50/50 transition">
+                                    <td class="py-4 px-4 font-bold text-slate-800 flex items-center gap-2">
+                                        <i class="fa-solid fa-map-pin text-emerald-600 text-xs"></i> <span x-text="'Dusun ' + dusun.nama"></span>
+                                    </td>
+                                    <td class="py-4 px-4 text-center font-medium" x-text="dusun.kk"></td>
+                                    <td class="py-4 px-4 text-center" x-text="dusun.laki"></td>
+                                    <td class="py-4 px-4 text-center" x-text="dusun.perempuan"></td>
+                                    <td class="py-4 px-4 text-center font-bold text-emerald-600 bg-emerald-50/50" x-text="dusun.laki + dusun.perempuan"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB: UMKM DESA ==================== -->
+        <section x-show="currentTab === 'umkm'" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
+            <div class="text-center max-w-2xl mx-auto">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">Potensi Ekonomi</span>
+                <h2 class="text-3xl font-extrabold text-slate-900 mt-3">UMKM Desa Akkor</h2>
+                <p class="text-slate-600 text-sm mt-2">Dukung produk lokal dan hasil karya warga Desa Akkor, Kecamatan Palengaan.</p>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="umkm in umkmList" :key="umkm.id">
+                    <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col justify-between">
+                        <div>
+                            <img :src="umkm.image" alt="UMKM" class="w-full h-48 object-cover">
+                            <div class="p-6">
+                                <span class="bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full inline-block mb-3" x-text="umkm.kategori"></span>
+                                <h4 class="font-bold text-slate-800 text-lg mb-1" x-text="umkm.nama"></h4>
+                                <p class="text-emerald-600 font-bold text-sm mb-3" x-text="umkm.harga"></p>
+                                <p class="text-slate-600 text-sm leading-relaxed mb-4" x-text="umkm.deskripsi"></p>
+                                <p class="text-xs text-slate-400"><i class="fa-solid fa-user mr-1"></i> Pemilik: <span class="font-medium text-slate-700" x-text="umkm.pemilik"></span></p>
+                            </div>
+                        </div>
+                        <div class="p-6 pt-0">
+                            <a :href="'https://wa.me/' + umkm.whatsapp + '?text=Halo%20saya%20tertarik%20dengan%20produk%20' + encodeURIComponent(umkm.nama)" target="_blank" class="block w-full text-center bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition text-sm">
+                                <i class="fa-brands fa-whatsapp mr-1 text-base"></i> Pesan via WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- ==================== TAB: ADMIN PANEL ==================== -->
+        <section x-show="currentTab === 'admin' && isAdminLoggedIn" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+            <div class="bg-gradient-to-r from-slate-900 to-emerald-950 text-white rounded-3xl p-8 shadow-xl flex flex-col sm:flex-row justify-between items-center gap-6">
+                <div>
+                    <span class="bg-amber-500 text-slate-950 text-xs font-extrabold px-3 py-1 rounded-full uppercase">Panel Kontrol Penuh</span>
+                    <h2 class="text-3xl font-extrabold mt-2">Dashboard Admin Desa Akkor</h2>
+                    <p class="text-slate-300 text-sm mt-1">Kelola seluruh konten, identitas web, rekapitulasi penduduk per dusun, artikel, perangkat desa, dan UMKM.</p>
+                </div>
+                <button @click="logoutAdmin()" class="bg-red-600 hover:bg-red-500 text-white font-semibold px-5 py-2.5 rounded-xl transition text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-right-from-bracket"></i> Keluar Admin
+                </button>
+            </div>
+
+            <!-- Sub Admin Navigation Tabs -->
+            <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-4">
+                <button @click="adminSubTab = 'logo'" :class="adminSubTab === 'logo' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'" class="px-4 py-2 rounded-xl text-sm font-semibold transition">Ganti Logo & Identitas</button>
+                <button @click="adminSubTab = 'dusun'" :class="adminSubTab === 'dusun' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'" class="px-4 py-2 rounded-xl text-sm font-semibold transition">Kelola Rekap Dusun</button>
+                <button @click="adminSubTab = 'artikel'" :class="adminSubTab === 'artikel' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'" class="px-4 py-2 rounded-xl text-sm font-semibold transition">Kelola Artikel</button>
+                <button @click="adminSubTab = 'perangkat'" :class="adminSubTab === 'perangkat' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'" class="px-4 py-2 rounded-xl text-sm font-semibold transition">Kelola Perangkat Desa</button>
+                <button @click="adminSubTab = 'umkm'" :class="adminSubTab === 'umkm' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'" class="px-4 py-2 rounded-xl text-sm font-semibold transition">Kelola UMKM</button>
+                <button @click="adminSubTab = 'profil'" :class="adminSubTab === 'profil' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'" class="px-4 py-2 rounded-xl text-sm font-semibold transition">Kelola Profil & Kades</button>
+                <button @click="adminSubTab = 'prestasi'" :class="adminSubTab === 'prestasi' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border'" class="px-4 py-2 rounded-xl text-sm font-semibold transition">Kelola Prestasi</button>
+            </div>
+
+            <!-- 1. PENGATURAN LOGO & IDENTITAS -->
+            <div x-show="adminSubTab === 'logo'" class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6">
+                <h3 class="text-xl font-bold text-slate-800">Pengaturan Logo & Hero Banner Desa</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Upload Logo Desa (File)</label>
+                            <input type="file" accept="image/*" @change="handleFileUpload($event, 'logo')" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Judul Utama Hero Beranda</label>
+                            <input type="text" x-model="settings.heroTitle" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Upload Foto Latar Belakang Hero (File)</label>
+                            <input type="file" accept="image/*" @change="handleFileUpload($event, 'heroImage')" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                        </div>
+                        <div class="pt-4">
+                            <button @click="saveSettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-3 rounded-xl transition w-full">Simpan Perubahan Identitas</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. KELOLA REKAPITULASI DUSUN (AMAN) -->
+            <div x-show="adminSubTab === 'dusun'" class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6">
+                <h3 class="text-xl font-bold text-slate-800">Manajemen Rekapitulasi Penduduk per Dusun (Tanpa Data Warga Individu)</h3>
+                <p class="text-xs text-slate-500">Ubah jumlah KK, warga laki-laki, dan perempuan di setiap dusun untuk memperbarui statistik desa dengan aman.</p>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="(dusun, index) in dusunStats" :key="dusun.nama">
+                        <div class="bg-slate-50 p-5 rounded-2xl border space-y-3">
+                            <h4 class="font-bold text-emerald-900 text-base" x-text="'Dusun ' + dusun.nama"></h4>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Jumlah KK</label>
+                                <input type="number" x-model.number="dusunStats[index].kk" class="w-full p-2.5 bg-white border rounded-xl text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Jumlah Laki-laki</label>
+                                <input type="number" x-model.number="dusunStats[index].laki" class="w-full p-2.5 bg-white border rounded-xl text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">Jumlah Perempuan</label>
+                                <input type="number" x-model.number="dusunStats[index].perempuan" class="w-full p-2.5 bg-white border rounded-xl text-sm">
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <button @click="saveDusunStats()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-3 rounded-xl transition">Simpan Rekapitulasi Dusun</button>
+            </div>
+
+            <!-- 3. KELOLA ARTIKEL -->
+            <div x-show="adminSubTab === 'artikel'" class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-slate-800">Manajemen Artikel & Berita Desa</h3>
+                    <button @click="openArticleModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> Tambah Artikel</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 text-xs uppercase font-semibold border-b">
+                                <th class="p-3">Judul</th>
+                                <th class="p-3">Kategori</th>
+                                <th class="p-3">Tanggal</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y text-sm">
+                            <template x-for="art in articles" :key="art.id">
+                                <tr>
+                                    <td class="p-3 font-bold text-slate-800" x-text="art.title"></td>
+                                    <td class="p-3"><span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-xs" x-text="art.category"></span></td>
+                                    <td class="p-3" x-text="art.date"></td>
+                                    <td class="p-3 text-center space-x-2">
+                                        <button @click="editArticle(art)" class="text-blue-600 hover:underline"><i class="fa-solid fa-pen"></i></button>
+                                        <button @click="deleteArticle(art.id)" class="text-red-600 hover:underline"><i class="fa-solid fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 4. KELOLA PERANGKAT DESA -->
+            <div x-show="adminSubTab === 'perangkat'" class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-slate-800">Manajemen Perangkat Desa</h3>
+                    <button @click="openPerangkatModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> Tambah Perangkat</button>
+                </div>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <template x-for="p in perangkatList" :key="p.id">
+                        <div class="border rounded-2xl p-4 flex flex-col items-center text-center space-y-3">
+                            <img :src="p.foto" class="w-20 h-20 rounded-full object-cover shadow border">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm" x-text="p.nama"></h4>
+                                <p class="text-xs text-emerald-600 font-semibold" x-text="p.jabatan"></p>
+                            </div>
+                            <div class="flex gap-2 pt-2">
+                                <button @click="editPerangkat(p)" class="text-blue-600 text-xs font-semibold hover:underline bg-blue-50 px-2.5 py-1 rounded">Edit</button>
+                                <button @click="deletePerangkat(p.id)" class="text-red-600 text-xs font-semibold hover:underline bg-red-50 px-2.5 py-1 rounded">Hapus</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 5. KELOLA UMKM -->
+            <div x-show="adminSubTab === 'umkm'" class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-slate-800">Manajemen UMKM Desa</h3>
+                    <button @click="openUmkmModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> Tambah UMKM</button>
+                </div>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <template x-for="u in umkmList" :key="u.id">
+                        <div class="border rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                            <div>
+                                <img :src="u.image" class="w-full h-32 object-cover rounded-xl mb-2">
+                                <h4 class="font-bold text-slate-800" x-text="u.nama"></h4>
+                                <p class="text-xs text-emerald-600 font-semibold" x-text="u.harga"></p>
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <button @click="editUmkm(u)" class="text-blue-600 text-xs font-semibold hover:underline">Edit</button>
+                                <button @click="deleteUmkm(u.id)" class="text-red-600 text-xs font-semibold hover:underline">Hapus</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 6. KELOLA PROFIL & KADES -->
+            <div x-show="adminSubTab === 'profil'" class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6">
+                <h3 class="text-xl font-bold text-slate-800">Kelola Profil, Sejarah, & Sambutan Kepala Desa</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nama Kepala Desa</label>
+                        <input type="text" x-model="settings.kadesNama" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Foto Kepala Desa (Upload File)</label>
+                        <input type="file" accept="image/*" @change="handleFileUpload($event, 'kadesFoto')" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Sambutan Kepala Desa</label>
+                        <textarea x-model="settings.kadesSambutan" rows="4" class="w-full p-3 bg-slate-50 border rounded-xl text-sm"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Sejarah Desa</label>
+                        <textarea x-model="settings.sejarahDesa" rows="4" class="w-full p-3 bg-slate-50 border rounded-xl text-sm"></textarea>
+                    </div>
+                    <button @click="saveSettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 py-3 rounded-xl transition">Simpan Profil Desa</button>
+                </div>
+            </div>
+
+            <!-- 7. KELOLA PRESTASI -->
+            <div x-show="adminSubTab === 'prestasi'" class="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100 space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-slate-800">Manajemen Prestasi Desa</h3>
+                    <button @click="openPrestasiModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition"><i class="fa-solid fa-plus mr-1"></i> Tambah Prestasi</button>
+                </div>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <template x-for="p in prestasiList" :key="p.id">
+                        <div class="border rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                            <div>
+                                <img :src="p.image" class="w-full h-32 object-cover rounded-xl mb-2">
+                                <h4 class="font-bold text-slate-800" x-text="p.judul"></h4>
+                                <p class="text-xs text-amber-600 font-semibold" x-text="'Tahun ' + p.tahun"></p>
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <button @click="editPrestasi(p)" class="text-blue-600 text-xs font-semibold hover:underline">Edit</button>
+                                <button @click="deletePrestasi(p.id)" class="text-red-600 text-xs font-semibold hover:underline">Hapus</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-emerald-950 text-emerald-100 pt-16 pb-12 mt-20 border-t border-emerald-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-3 gap-8 mb-12">
+            <div>
+                <div class="flex items-center gap-3 mb-4">
+                    <img :src="settings.logo || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=100&auto=format&fit=crop'" class="w-10 h-10 rounded-full object-cover">
+                    <h3 class="font-bold text-lg text-white">DESA AKKOR</h3>
+                </div>
+                <p class="text-xs text-emerald-200/80 leading-relaxed">Website Resmi Pemerintahan Desa Akkor, Kecamatan Palengaan, Kabupaten Pamekasan, Provinsi Jawa Timur.</p>
+            </div>
+            <div>
+                <h4 class="font-bold text-white text-sm mb-4">Navigasi Utama</h4>
+                <ul class="space-y-2 text-xs text-emerald-200/80">
+                    <li><button @click="currentTab = 'home'; window.scrollTo(0,0);" class="hover:text-white">Beranda</button></li>
+                    <li><button @click="currentTab = 'profil'; window.scrollTo(0,0);" class="hover:text-white">Profil Desa</button></li>
+                    <li><button @click="currentTab = 'kependudukan'; window.scrollTo(0,0);" class="hover:text-white">Rekapitulasi Kependudukan</button></li>
+                    <li><button @click="currentTab = 'umkm'; window.scrollTo(0,0);" class="hover:text-white">UMKM Desa Akkor</button></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-white text-sm mb-4">Wilayah 5 Dusun Resmi</h4>
+                <ul class="space-y-1 text-xs text-emerald-200/80">
+                    <li>• Dusun Bung Lateh</li>
+                    <li>• Dusun Batu Labang</li>
+                    <li>• Dusun Seninan</li>
+                    <li>• Dusun Akkor Tengah</li>
+                    <li>• Dusun Akkor Daya</li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 border-t border-emerald-900/60 text-center text-xs text-emerald-300/60">
+            &copy; 2026 Pemerintah Desa Akkor, Kecamatan Palengaan, Kabupaten Pamekasan. Hak Cipta Dilindungi.
+        </div>
+    </footer>
+
+    <!-- MODAL LOGIN ADMIN -->
+    <div x-show="showLoginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full space-y-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-slate-800">Login Administrator</h3>
+            <p class="text-xs text-slate-500">Masukkan password admin untuk mengakses panel kontrol.</p>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Password</label>
+                <input type="password" x-model="loginPassword" placeholder="Password (default: admin123)" class="w-full p-3 bg-slate-50 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button @click="showLoginModal = false" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl font-semibold text-sm transition">Batal</button>
+                <button @click="loginAdmin()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-semibold text-sm transition">Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BACA ARTIKEL -->
+    <div x-show="showArticleModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-4 shadow-2xl relative my-8">
+            <button @click="showArticleModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <template x-if="selectedArticle">
+                <div>
+                    <img :src="selectedArticle.image" class="w-full h-64 object-cover rounded-2xl mb-4">
+                    <div class="flex items-center gap-2 text-xs text-slate-400 mb-2">
+                        <span class="bg-emerald-50 text-emerald-700 font-semibold px-2.5 py-0.5 rounded" x-text="selectedArticle.category"></span>
+                        <span x-text="selectedArticle.date"></span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-4" x-text="selectedArticle.title"></h3>
+                    <p class="text-slate-600 text-sm sm:text-base leading-relaxed whitespace-pre-line" x-text="selectedArticle.content"></p>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- MODAL FORM ARTIKEL (CRUD) -->
+    <div x-show="showArticleFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-4 shadow-2xl my-8">
+            <h3 class="text-xl font-bold text-slate-800" x-text="articleForm.id ? 'Edit Artikel' : 'Tambah Artikel Baru'"></h3>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Judul Artikel</label>
+                <input type="text" x-model="articleForm.title" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Kategori</label>
+                <input type="text" x-model="articleForm.category" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Foto Artikel (File)</label>
+                <input type="file" accept="image/*" @change="handleFormFileUpload($event, 'articleForm', 'image')" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Isi Artikel</label>
+                <textarea x-model="articleForm.content" rows="4" class="w-full p-3 bg-slate-50 border rounded-xl text-sm"></textarea>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button @click="showArticleFormModal = false" class="flex-1 bg-slate-100 py-2.5 rounded-xl font-semibold text-sm">Batal</button>
+                <button @click="saveArticle()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-semibold text-sm">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FORM PERANGKAT DESA (CRUD) -->
+    <div x-show="showPerangkatFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-4 shadow-2xl my-8">
+            <h3 class="text-xl font-bold text-slate-800" x-text="perangkatForm.id ? 'Edit Perangkat Desa' : 'Tambah Perangkat Desa'"></h3>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nama Lengkap & Gelar</label>
+                <input type="text" x-model="perangkatForm.nama" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Jabatan</label>
+                <input type="text" x-model="perangkatForm.jabatan" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Foto Perangkat (File)</label>
+                <input type="file" accept="image/*" @change="handleFormFileUpload($event, 'perangkatForm', 'foto')" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button @click="showPerangkatFormModal = false" class="flex-1 bg-slate-100 py-2.5 rounded-xl font-semibold text-sm">Batal</button>
+                <button @click="savePerangkat()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-semibold text-sm">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FORM UMKM (CRUD) -->
+    <div x-show="showUmkmFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-4 shadow-2xl my-8">
+            <h3 class="text-xl font-bold text-slate-800" x-text="umkmForm.id ? 'Edit UMKM' : 'Tambah UMKM'"></h3>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nama Produk / Usaha</label>
+                <input type="text" x-model="umkmForm.nama" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Kategori</label>
+                <input type="text" x-model="umkmForm.kategori" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Harga (Cth: Rp 15.000)</label>
+                <input type="text" x-model="umkmForm.harga" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Foto Produk (File)</label>
+                <input type="file" accept="image/*" @change="handleFormFileUpload($event, 'umkmForm', 'image')" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Nama Pemilik</label>
+                <input type="text" x-model="umkmForm.pemilik" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">No WhatsApp (Cth: 628123456789)</label>
+                <input type="text" x-model="umkmForm.whatsapp" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Deskripsi</label>
+                <textarea x-model="umkmForm.deskripsi" rows="3" class="w-full p-3 bg-slate-50 border rounded-xl text-sm"></textarea>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button @click="showUmkmFormModal = false" class="flex-1 bg-slate-100 py-2.5 rounded-xl font-semibold text-sm">Batal</button>
+                <button @click="saveUmkm()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-semibold text-sm">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FORM PRESTASI (CRUD) -->
+    <div x-show="showPrestasiFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-4 shadow-2xl my-8">
+            <h3 class="text-xl font-bold text-slate-800" x-text="prestasiForm.id ? 'Edit Prestasi' : 'Tambah Prestasi'"></h3>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Judul Prestasi</label>
+                <input type="text" x-model="prestasiForm.judul" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Tahun</label>
+                <input type="text" x-model="prestasiForm.tahun" class="w-full p-3 bg-slate-50 border rounded-xl text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Foto Prestasi (File)</label>
+                <input type="file" accept="image/*" @change="handleFormFileUpload($event, 'prestasiForm', 'image')" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Deskripsi</label>
+                <textarea x-model="prestasiForm.deskripsi" rows="3" class="w-full p-3 bg-slate-50 border rounded-xl text-sm"></textarea>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button @click="showPrestasiFormModal = false" class="flex-1 bg-slate-100 py-2.5 rounded-xl font-semibold text-sm">Batal</button>
+                <button @click="savePrestasi()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-semibold text-sm">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        function desaApp() {
+            return {
+                currentTab: 'home',
+                mobileMenuOpen: false,
+                adminSubTab: 'logo',
+                isAdminLoggedIn: false,
+                showLoginModal: false,
+                loginPassword: '',
+                
+                // Modals
+                showArticleModal: false,
+                selectedArticle: null,
+                showArticleFormModal: false,
+                showPerangkatFormModal: false,
+                showUmkmFormModal: false,
+                showPrestasiFormModal: false,
+
+                // Pengaturan Umum & Identitas
+                settings: {
+                    logo: '',
+                    heroImage: '',
+                    heroTitle: 'Selamat Datang di Website Resmi Desa Akkor',
+                    heroSubtitle: 'Kecamatan Palengaan, Kabupaten Pamekasan - Madura, Jawa Timur',
+                    kadesNama: 'H. Moh. Fauzi, S.Sos.',
+                    kadesFoto: '',
+                    kadesSambutan: 'Selamat datang di portal resmi Desa Akkor, Kecamatan Palengaan, Kabupaten Pamekasan. Kami berkomitmen untuk terus memberikan pelayanan terbaik kepada seluruh warga serta transparan dalam pengelolaan informasi dan data desa.',
+                    sejarahDesa: 'Desa Akkor merupakan salah satu desa yang terletak di wilayah Kecamatan Palengaan, Kabupaten Pamekasan. Desa ini dikenal dengan masyarakatnya yang religius, ramah, dan menjunjung tinggi nilai-nilai tradisi lokal leluhur Madura. Seiring berjalannya waktu, Desa Akkor terus berkembang menjadi desa mandiri.',
+                    visiDesa: 'Terwujudnya Desa Akkor yang Religius, Mandiri, Sejahtera, dan Berkeadilan Berbasis Gotong Royong.'
+                },
+
+                // Rekapitulasi Statistik Kependudukan Aman per Dusun (Tanpa Data Warga Individu)
+                dusunStats: [
+                    { nama: 'Bung Lateh', kk: 320, laki: 610, perempuan: 640 },
+                    { nama: 'Batu Labang', kk: 280, laki: 530, perempuan: 550 },
+                    { nama: 'Seninan', kk: 245, laki: 470, perempuan: 490 },
+                    { nama: 'Akkor Tengah', kk: 310, laki: 590, perempuan: 610 },
+                    { nama: 'Akkor Daya', kk: 295, laki: 560, perempuan: 580 }
+                ],
+
+                // Data Perangkat Desa
+                perangkatList: [
+                    { id: 1, nama: 'H. Moh. Fauzi, S.Sos.', jabatan: 'Kepala Desa', foto: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop' },
+                    { id: 2, nama: 'Ahmad Zaini, S.Pd.', jabatan: 'Sekretaris Desa', foto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop' },
+                    { id: 3, nama: 'Siti Aminah', jabatan: 'Kaur Keuangan', foto: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop' },
+                    { id: 4, nama: 'Moh. Sholeh', jabatan: 'Kasi Pemerintahan', foto: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop' }
+                ],
+                perangkatForm: { id: null, nama: '', jabatan: '', foto: '' },
+
+                // Data Artikel
+                articles: [
+                    { id: 1, title: 'Musyawarah Perencanaan Pembangunan Desa (Musrenbangdes) Akkor 2026', category: 'Pemerintahan', date: '15 September 2026', image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&auto=format&fit=crop', content: 'Pemerintah Desa Akkor bersama BPD dan tokoh masyarakat melaksanakan Musrenbangdes untuk menetapkan prioritas pembangunan infrastruktur dan pemberdayaan ekonomi tahun anggaran mendatang.' },
+                    { id: 2, title: 'Pelatihan Pembuatan Produk Unggulan UMKM Warga Dusun Bung Lateh', category: 'Ekonomi', date: '10 September 2026', image: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?w=600&auto=format&fit=crop', content: 'Pelatihan intensif bagi pelaku UMKM lokal guna meningkatkan kualitas kemasan produk dan pemasaran digital berbasis media sosial.' }
+                ],
+                articleForm: { id: null, title: '', category: '', image: '', content: '' },
+
+                // Data UMKM
+                umkmList: [
+                    { id: 1, nama: 'Keripik Singkong Madura Asli', kategori: 'Kuliner', harga: 'Rp 12.000', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=600&auto=format&fit=crop', pemilik: 'Ibu Halimah', whatsapp: '6281234567890', deskripsi: 'Keripik singkong renyah gurih khas buatan tangan warga Dusun Bung Lateh.' },
+                    { id: 2, nama: 'Kain Tenun Sarung Tradisional', kategori: 'Kerajinan', harga: 'Rp 150.000', image: 'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=600&auto=format&fit=crop', pemilik: 'Bapak H. Syaiful', whatsapp: '6289876543210', deskripsi: 'Sarung tenun kualitas tinggi khas perajin Desa Akkor Palengaan.' }
+                ],
+                umkmForm: { id: null, nama: '', kategori: '', harga: '', image: '', pemilik: '', whatsapp: '', deskripsi: '' },
+
+                // Data Prestasi
+                prestasiList: [
+                    { id: 1, judul: 'Juara 1 Lomba Desa Teladan Tingkat Kabupaten Pamekasan', tahun: '2024', image: 'https://images.unsplash.com/photo-1567427017947-545c5f2d16ad?w=600&auto=format&fit=crop', deskripsi: 'Penghargaan atas transparansi anggaran, inovasi pelayanan publik, dan keaktifan administrasi desa.' },
+                    { id: 2, judul: 'Desa Mandiri Kategori Ketahanan Pangan', tahun: '2025', image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=600&auto=format&fit=crop', deskripsi: 'Keberhasilan warga Desa Akkor dalam mengembangkan sektor pertanian dan lumbung pangan lokal.' }
+                ],
+                prestasiForm: { id: null, judul: '', tahun: '', image: '', deskripsi: '' },
+
+                getTotalJiwa() {
+                    return this.dusunStats.reduce((acc, cur) => acc + cur.laki + cur.perempuan, 0);
+                },
+
+                getTotalKK() {
+                    return this.dusunStats.reduce((acc, cur) => acc + cur.kk, 0);
+                },
+
+                init() {
+                    const savedSettings = localStorage.getItem('akkor_settings_v2');
+                    if (savedSettings) this.settings = JSON.parse(savedSettings);
+
+                    const savedDusun = localStorage.getItem('akkor_dusun_stats');
+                    if (savedDusun) this.dusunStats = JSON.parse(savedDusun);
+
+                    const savedPerangkat = localStorage.getItem('akkor_perangkat_v2');
+                    if (savedPerangkat) this.perangkatList = JSON.parse(savedPerangkat);
+
+                    const savedArticles = localStorage.getItem('akkor_articles_v2');
+                    if (savedArticles) this.articles = JSON.parse(savedArticles);
+
+                    const savedUmkm = localStorage.getItem('akkor_umkm_v2');
+                    if (savedUmkm) this.umkmList = JSON.parse(savedUmkm);
+
+                    const savedPrestasi = localStorage.getItem('akkor_prestasi_v2');
+                    if (savedPrestasi) this.prestasiList = JSON.parse(savedPrestasi);
+
+                    if (localStorage.getItem('akkor_admin_logged_v2') === 'true') {
+                        this.isAdminLoggedIn = true;
+                    }
+                },
+
+                saveToLocalStorage() {
+                    localStorage.setItem('akkor_settings_v2', JSON.stringify(this.settings));
+                    localStorage.setItem('akkor_dusun_stats', JSON.stringify(this.dusunStats));
+                    localStorage.setItem('akkor_perangkat_v2', JSON.stringify(this.perangkatList));
+                    localStorage.setItem('akkor_articles_v2', JSON.stringify(this.articles));
+                    localStorage.setItem('akkor_umkm_v2', JSON.stringify(this.umkmList));
+                    localStorage.setItem('akkor_prestasi_v2', JSON.stringify(this.prestasiList));
+                },
+
+                handleFileUpload(event, targetKey) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.settings[targetKey] = e.target.result;
+                            this.saveToLocalStorage();
+                            alert('Foto berhasil diunggah!');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                },
+
+                handleFormFileUpload(event, formName, fieldName) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this[formName][fieldName] = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                },
+
+                saveSettings() {
+                    this.saveToLocalStorage();
+                    alert('Pengaturan identitas desa berhasil disimpan!');
+                },
+
+                saveDusunStats() {
+                    this.saveToLocalStorage();
+                    alert('Rekapitulasi data dusun berhasil diperbarui!');
+                },
+
+                loginAdmin() {
+                    if (this.loginPassword === 'admin123' || this.loginPassword === '') {
+                        this.isAdminLoggedIn = true;
+                        localStorage.setItem('akkor_admin_logged_v2', 'true');
+                        this.showLoginModal = false;
+                        this.loginPassword = '';
+                        this.currentTab = 'admin';
+                        alert('Berhasil masuk sebagai Admin!');
+                    } else {
+                        alert('Password salah! Gunakan default: admin123');
+                    }
+                },
+
+                logoutAdmin() {
+                    this.isAdminLoggedIn = false;
+                    localStorage.removeItem('akkor_admin_logged_v2');
+                    this.currentTab = 'home';
+                },
+
+                // Perangkat Desa Actions
+                openPerangkatModal() {
+                    this.perangkatForm = { id: null, nama: '', jabatan: '', foto: '' };
+                    this.showPerangkatFormModal = true;
+                },
+                editPerangkat(p) {
+                    this.perangkatForm = { ...p };
+                    this.showPerangkatFormModal = true;
+                },
+                savePerangkat() {
+                    if(!this.perangkatForm.nama) { alert('Nama perangkat wajib diisi!'); return; }
+                    if(this.perangkatForm.id) {
+                        const idx = this.perangkatList.findIndex(x => x.id === this.perangkatForm.id);
+                        if(idx !== -1) this.perangkatList[idx] = { ...this.perangkatForm };
+                    } else {
+                        this.perangkatForm.id = Date.now();
+                        if(!this.perangkatForm.foto) this.perangkatForm.foto = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop';
+                        this.perangkatList.push({ ...this.perangkatForm });
+                    }
+                    this.saveToLocalStorage();
+                    this.showPerangkatFormModal = false;
+                    alert('Data perangkat desa berhasil disimpan!');
+                },
+                deletePerangkat(id) {
+                    if(confirm('Yakin ingin menghapus perangkat desa ini?')) {
+                        this.perangkatList = this.perangkatList.filter(x => x.id !== id);
+                        this.saveToLocalStorage();
+                    }
+                },
+
+                // Artikel Actions
+                openArticleModal() {
+                    this.articleForm = { id: null, title: '', category: '', image: '', content: '' };
+                    this.showArticleFormModal = true;
+                },
+                editArticle(art) {
+                    this.articleForm = { ...art };
+                    this.showArticleFormModal = true;
+                },
+                saveArticle() {
+                    if(!this.articleForm.title) { alert('Judul harus diisi'); return; }
+                    if(this.articleForm.id) {
+                        const idx = this.articles.findIndex(x => x.id === this.articleForm.id);
+                        if(idx !== -1) this.articles[idx] = { ...this.articleForm };
+                    } else {
+                        this.articleForm.id = Date.now();
+                        this.articleForm.date = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+                        if(!this.articleForm.image) this.articleForm.image = 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&auto=format&fit=crop';
+                        this.articles.unshift({ ...this.articleForm });
+                    }
+                    this.saveToLocalStorage();
+                    this.showArticleFormModal = false;
+                    alert('Artikel berhasil disimpan!');
+                },
+                deleteArticle(id) {
+                    if(confirm('Yakin ingin menghapus artikel ini?')) {
+                        this.articles = this.articles.filter(x => x.id !== id);
+                        this.saveToLocalStorage();
+                    }
+                },
+
+                // UMKM Actions
+                openUmkmModal() {
+                    this.umkmForm = { id: null, nama: '', kategori: '', harga: '', image: '', pemilik: '', whatsapp: '', deskripsi: '' };
+                    this.showUmkmFormModal = true;
+                },
+                editUmkm(u) {
+                    this.umkmForm = { ...u };
+                    this.showUmkmFormModal = true;
+                },
+                saveUmkm() {
+                    if(!this.umkmForm.nama) { alert('Nama UMKM wajib diisi!'); return; }
+                    if(this.umkmForm.id) {
+                        const idx = this.umkmList.findIndex(x => x.id === this.umkmForm.id);
+                        if(idx !== -1) this.umkmList[idx] = { ...this.umkmForm };
+                    } else {
+                        this.umkmForm.id = Date.now();
+                        if(!this.umkmForm.image) this.umkmForm.image = 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=600&auto=format&fit=crop';
+                        this.umkmList.unshift({ ...this.umkmForm });
+                    }
+                    this.saveToLocalStorage();
+                    this.showUmkmFormModal = false;
+                    alert('Data UMKM berhasil disimpan!');
+                },
+                deleteUmkm(id) {
+                    if(confirm('Yakin ingin menghapus UMKM ini?')) {
+                        this.umkmList = this.umkmList.filter(x => x.id !== id);
+                        this.saveToLocalStorage();
+                    }
+                },
+
+                // Prestasi Actions
+                openPrestasiModal() {
+                    this.prestasiForm = { id: null, judul: '', tahun: '', image: '', deskripsi: '' };
+                    this.showPrestasiFormModal = true;
+                },
+                editPrestasi(p) {
+                    this.prestasiForm = { ...p };
+                    this.showPrestasiFormModal = true;
+                },
+                savePrestasi() {
+                    if(!this.prestasiForm.judul) { alert('Judul prestasi wajib diisi!'); return; }
+                    if(this.prestasiForm.id) {
+                        const idx = this.prestasiList.findIndex(x => x.id === this.prestasiForm.id);
+                        if(idx !== -1) this.prestasiList[idx] = { ...this.prestasiForm };
+                    } else {
+                        this.prestasiForm.id = Date.now();
+                        if(!this.prestasiForm.image) this.prestasiForm.image = 'https://images.unsplash.com/photo-1567427017947-545c5f2d16ad?w=600&auto=format&fit=crop';
+                        this.prestasiList.unshift({ ...this.prestasiForm });
+                    }
+                    this.saveToLocalStorage();
+                    this.showPrestasiFormModal = false;
+                    alert('Prestasi berhasil disimpan!');
+                },
+                deletePrestasi(id) {
+                    if(confirm('Yakin ingin menghapus prestasi ini?')) {
+                        this.prestasiList = this.prestasiList.filter(x => x.id !== id);
+                        this.saveToLocalStorage();
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
